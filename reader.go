@@ -34,7 +34,6 @@ var (
 		tls.HelloIOS_12_1,
 	}
 	client = &fasthttp.Client{
-		Name:                          "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:69.0) Gecko/20100101 Firefox/69.0",
 		NoDefaultUserAgentHeader:      true,
 		MaxConnsPerHost:               10000,
 		ReadBufferSize:                4 * 4096, // Make sure to set this big enough that your whole request can be read at once.
@@ -44,7 +43,6 @@ var (
 		MaxIdleConnDuration:           time.Minute,
 		DisableHeaderNamesNormalizing: true, // If you set the case on your headers correctly you can enable this.
 		TLSConfig:                     &tls.Config{InsecureSkipVerify: true},
-		ClientHelloID:                 &tls.HelloFirefox_65,
 	}
 )
 
@@ -58,13 +56,8 @@ func reader(c net.Conn) {
 			c.Write([]byte(err.Error()))
 			return
 		}
-		fmt.Println("client request .............")
+		log.Println(".............Received request.............")
 		fmt.Println(string(buf[0:n]))
-		// ----------------------------------------------------------------
-		// Test exceptions
-		// c.Write([]byte(`{"error":"could not connect to proxy"}`))
-		// c.Close()
-		// ----------------------------------------------------------------
 		reqOpts := RequestOpts{}
 		err = json.Unmarshal(buf[0:n], &reqOpts)
 		if err != nil {
@@ -80,6 +73,8 @@ func reader(c net.Conn) {
 		// Load parrot
 		if reqOpts.ParrotID > -1 {
 			client.ClientHelloID = &pm[reqOpts.ParrotID]
+		} else {
+			client.ClientHelloID = &pm[5]
 		}
 		// Load headers in order if present
 		if reqOpts.HeaderOrder != "" {
@@ -89,10 +84,13 @@ func reader(c net.Conn) {
 				log.Fatalf("Unexpected error: %s", err)
 			}
 		}
+		// req.Header.VisitAllInOrder(func(k, v []byte) {
+		// 	fmt.Printf("%s: %s\n", string(k), string(v))
+		// })
 		// Load headers unordered
 		if reqOpts.HeaderOrder == "" {
 			for h, i := range reqOpts.Headers {
-				if h != "User-Agent" && h != "Host" && h != "" {
+				if h != "Host" && h != "" {
 					req.Header.Set(h, i)
 				}
 			}
@@ -104,23 +102,16 @@ func reader(c net.Conn) {
 		// Load request URL
 		req.SetRequestURI(reqOpts.URL)
 		// Load request method
-		req.Header.SetMethod(reqOpts.Method)
+		if reqOpts.Method != "" {
+			req.Header.SetMethod(reqOpts.Method)
+		}
 		// Load body
 		if reqOpts.Body != "" {
 			req.AppendBodyString(reqOpts.Body)
 		}
 		log.Println("................................................................................")
 		fmt.Println("Request for ", string(req.URI().FullURI()))
-		// fmt.Println()
-		req.Header.VisitAllInOrder(func(key, value []byte) {
-			// log.Println("visit request headers in order")
-			fmt.Printf("%s:%s\n", string(key), string(value))
-		})
-		log.Println("................................................................................")
-		req.Header.VisitAll(func(key, value []byte) {
-			// log.Println("visit request headers in order")
-			fmt.Printf("%s:%s\n", string(key), string(value))
-		})
+		fmt.Println(req)
 		// finally do client request
 		startTime := time.Now()
 		timeout := time.Duration(60) * time.Second
@@ -176,7 +167,7 @@ func reader(c net.Conn) {
 		if err != nil {
 			c.Write([]byte(`{"error":"couldnt marshal json"}`))
 		}
-		log.Println("Final result:")
+		log.Println(".............Final response.............")
 		log.Println(string(fb))
 		c.Write(fb)
 		c.Close()
