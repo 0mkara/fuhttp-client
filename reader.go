@@ -10,26 +10,48 @@ import (
 	"net"
 	"time"
 
+	tls "github.com/refraction-networking/utls"
 	"github.com/valyala/fasthttp"
+	"github.com/valyala/fasthttp/fasthttpproxy"
 )
 
-func createKeyValuePairs(m map[string]string) string {
-	b := new(bytes.Buffer)
-	for key, value := range m {
-		fmt.Fprintf(b, "%s=\"%s\"\n", key, value)
+var (
+	parrotmap = make(map[int]interface{})
+	parrots   = []tls.ClientHelloID{
+		tls.HelloFirefox_Auto,
+		tls.HelloFirefox_55,
+		tls.HelloFirefox_56,
+		tls.HelloFirefox_63,
+		tls.HelloFirefox_65,
+		tls.HelloChrome_Auto,
+		tls.HelloChrome_58,
+		tls.HelloChrome_62,
+		tls.HelloChrome_70,
+		tls.HelloChrome_72,
+		tls.HelloChrome_83,
+		tls.HelloIOS_Auto,
+		tls.HelloIOS_11_1,
+		tls.HelloIOS_12_1,
 	}
-	return b.String()
-}
-
-// func createOrderedHeader(h map[string]string) {
-// 	m := orderedmap.NewOrderedMap()
-// 	for i := range headerOredr {
-// 		m.set(headerOredr[i], value)
-// 	}
-// }
+	client = &fasthttp.Client{
+		Name:                          "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:69.0) Gecko/20100101 Firefox/69.0",
+		NoDefaultUserAgentHeader:      true,
+		MaxConnsPerHost:               10000,
+		ReadBufferSize:                4 * 4096, // Make sure to set this big enough that your whole request can be read at once.
+		WriteBufferSize:               4 * 4096, // Same but for your response.
+		ReadTimeout:                   time.Second,
+		WriteTimeout:                  time.Second,
+		MaxIdleConnDuration:           time.Minute,
+		DisableHeaderNamesNormalizing: true, // If you set the case on your headers correctly you can enable this.
+		TLSConfig:                     &tls.Config{InsecureSkipVerify: true},
+		ClientHelloID:                 &tls.HelloFirefox_65,
+	}
+)
 
 func reader(c net.Conn) {
 	buf := make([]byte, 1024*4)
+	parrotmap[0] = parrots
+	pm := parrotmap[0].([]tls.ClientHelloID)
 	for {
 		n, err := c.Read(buf[:])
 		if err != nil {
@@ -49,14 +71,16 @@ func reader(c net.Conn) {
 			c.Write([]byte(`{"error":"Request parsing failed: ` + err.Error() + `"}`))
 			return
 		}
-		log.Println("request opts parsed........")
-		fmt.Println(reqOpts)
 		req := fasthttp.AcquireRequest()
 		res := fasthttp.AcquireResponse()
 		defer func() {
 			fasthttp.ReleaseRequest(req)
 			fasthttp.ReleaseResponse(res)
 		}()
+		// Load parrot
+		if reqOpts.ParrotID > -1 {
+			client.ClientHelloID = &pm[reqOpts.ParrotID]
+		}
 		// Load headers in order if present
 		if reqOpts.HeaderOrder != "" {
 			r := bytes.NewBufferString(reqOpts.HeaderOrder)
@@ -73,14 +97,10 @@ func reader(c net.Conn) {
 				}
 			}
 		}
-		// Load cookies
-		// for c, i := range reqOpts.Cookies {
-		// 	req.Header.SetCookie(c, i)
-		// }
 		// Load proxy
-		// if reqOpts.Proxy != nil {
-		// 	client.Dial = fasthttpproxy.FasthttpHTTPDialer(*reqOpts.Proxy)
-		// }
+		if reqOpts.Proxy != nil {
+			client.Dial = fasthttpproxy.FasthttpHTTPDialer(*reqOpts.Proxy)
+		}
 		// Load request URL
 		req.SetRequestURI(reqOpts.URL)
 		// Load request method

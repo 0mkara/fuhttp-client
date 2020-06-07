@@ -7,8 +7,9 @@ type RequestOpts struct {
 	Proxy       *string           `json:"proxy,omitempty"`
 	Headers     map[string]string `json:"headers,omitempty"`
 	HeaderOrder string            `json:"header_order,omitempty"`
-	Body        string            `json:"body"`
-	Timeout     int               `json:"timeout"`
+	Body        string            `json:"body,omitempty"`
+	Timeout     int               `json:"timeout,omitempty"`
+	ParrotID    int               `json:"parrotId,omitempty"`
 }
 
 // RequestResp response to return
