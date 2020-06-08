@@ -35,6 +35,7 @@ var (
 	}
 	client = &fasthttp.Client{
 		NoDefaultUserAgentHeader:      true,
+		EnableRawHeaders:              true,
 		MaxConnsPerHost:               10000,
 		ReadBufferSize:                4 * 4096, // Make sure to set this big enough that your whole request can be read at once.
 		WriteBufferSize:               4 * 4096, // Same but for your response.
@@ -84,6 +85,7 @@ func reader(c net.Conn) {
 				log.Fatalf("Unexpected error: %s", err)
 			}
 		}
+		// log.Println(".............Print headers in order.............")
 		// req.Header.VisitAllInOrder(func(k, v []byte) {
 		// 	fmt.Printf("%s: %s\n", string(k), string(v))
 		// })
@@ -109,10 +111,18 @@ func reader(c net.Conn) {
 		if reqOpts.Body != "" {
 			req.AppendBodyString(reqOpts.Body)
 		}
-		log.Println("................................................................................")
-		fmt.Println("Request for ", string(req.URI().FullURI()))
-		fmt.Println(req)
-		// finally do client request
+		// log.Println("................................................................................")
+		// fmt.Println("Request for ", string(req.URI().FullURI()))
+		// log.Println("................................................................................")
+		// fmt.Println(string(req.Header.RawHeaders()))
+		// log.Println("...............................")
+		// fmt.Println(string(req.Header.Header()))
+		// log.Println("...............................")
+		// fmt.Println(req)
+		// log.Println("...............................")
+		// Request parsing ends above
+		// -------------------------------------------------------------------------------------------------------------------------------------
+		// Finally do client request
 		startTime := time.Now()
 		timeout := time.Duration(60) * time.Second
 		if err := client.DoTimeout(req, res, timeout); err != nil {
