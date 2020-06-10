@@ -48,7 +48,7 @@ var (
 )
 
 func reader(c net.Conn) {
-	buf := make([]byte, 1024*4)
+	buf := make([]byte, 1024*1024*1)
 	parrotmap[0] = parrots
 	pm := parrotmap[0].([]tls.ClientHelloID)
 	for {
@@ -85,10 +85,6 @@ func reader(c net.Conn) {
 				log.Fatalf("Unexpected error: %s", err)
 			}
 		}
-		// log.Println(".............Print headers in order.............")
-		// req.Header.VisitAllInOrder(func(k, v []byte) {
-		// 	fmt.Printf("%s: %s\n", string(k), string(v))
-		// })
 		// Load headers unordered
 		if reqOpts.HeaderOrder == "" {
 			for h, i := range reqOpts.Headers {
@@ -111,15 +107,6 @@ func reader(c net.Conn) {
 		if reqOpts.Body != "" {
 			req.AppendBodyString(reqOpts.Body)
 		}
-		// log.Println("................................................................................")
-		// fmt.Println("Request for ", string(req.URI().FullURI()))
-		// log.Println("................................................................................")
-		// fmt.Println(string(req.Header.RawHeaders()))
-		// log.Println("...............................")
-		// fmt.Println(string(req.Header.Header()))
-		// log.Println("...............................")
-		// fmt.Println(req)
-		// log.Println("...............................")
 		// Request parsing ends above
 		// -------------------------------------------------------------------------------------------------------------------------------------
 		// Finally do client request
