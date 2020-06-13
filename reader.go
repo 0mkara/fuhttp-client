@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -94,6 +93,8 @@ func reader(c net.Conn) {
 			}
 		}
 		// Load proxy
+		fmt.Println("Proxy")
+		fmt.Println(reqOpts.Proxy)
 		if reqOpts.Proxy != nil {
 			client.Dial = fasthttpproxy.FasthttpHTTPDialer(*reqOpts.Proxy)
 		}
@@ -109,64 +110,6 @@ func reader(c net.Conn) {
 		}
 		// Request parsing ends above
 		// -------------------------------------------------------------------------------------------------------------------------------------
-		// Finally do client request
-		startTime := time.Now()
-		timeout := time.Duration(60) * time.Second
-		if err := client.DoTimeout(req, res, timeout); err != nil {
-			c.Write([]byte(`{"error":"` + err.Error() + `"}`))
-			c.Close()
-			return
-		}
-		var bodyBytes []byte
-		res.Header.VisitAll(func(key, value []byte) {
-			if string(key) == "Content-Encoding" {
-				log.Println("detecting encoding.......")
-				log.Println(string(value))
-				switch string(value) {
-				case "gzip":
-					bodyBytes, err = res.BodyGunzip()
-					if err != nil {
-						c.Write([]byte(`{"error":"gzip read error"}`))
-					}
-				case "br":
-					bodyBytes, err = res.BodyUnbrotli()
-					if err != nil {
-						c.Write([]byte(`{"error":"brotli read error"}`))
-					}
-					break
-				case "deflate":
-					bodyBytes, err = res.BodyInflate()
-					if err != nil {
-						c.Write([]byte(`{"error":"brotli read error"}`))
-					}
-					break
-				default:
-					bodyBytes = res.Body()
-				}
-			}
-		})
-		if !(len(bodyBytes) > 0) {
-			bodyBytes = res.Body()
-		}
-		response := &RequestResp{}
-		response.Time = int(time.Since(startTime).Milliseconds())
-		response.StatusCode = res.StatusCode()
-		response.Headers = map[string][]string{}
-		// Add all headers to response
-		res.Header.VisitAll(func(key, value []byte) {
-			response.Headers[string(key)] = append(response.Headers[string(key)], string(value))
-		})
-
-		result := &RequestResult{}
-		result.Response = response
-		result.Body = base64.StdEncoding.EncodeToString(bodyBytes)
-		fb, err := json.Marshal(result)
-		if err != nil {
-			c.Write([]byte(`{"error":"couldnt marshal json"}`))
-		}
-		log.Println(".............Final response.............")
-		log.Println(string(fb))
-		c.Write(fb)
-		c.Close()
+		go fuclient(c, req, res, client)
 	}
 }
