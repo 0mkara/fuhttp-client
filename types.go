@@ -4,7 +4,7 @@ package main
 type RequestOpts struct {
 	Method      string            `json:"method,omitempty"`
 	URL         string            `json:"url,omitempty"`
-	Proxy       *string           `json:"proxy,omitempty"`
+	Proxy       string            `json:"proxy,omitempty"`
 	Headers     map[string]string `json:"headers,omitempty"`
 	HeaderOrder string            `json:"header_order,omitempty"`
 	Body        string            `json:"body,omitempty"`

@@ -93,10 +93,10 @@ func reader(c net.Conn) {
 			}
 		}
 		// Load proxy
-		fmt.Println("Proxy")
-		fmt.Println(reqOpts.Proxy)
-		if reqOpts.Proxy != nil {
-			client.Dial = fasthttpproxy.FasthttpHTTPDialer(*reqOpts.Proxy)
+		if reqOpts.Proxy != "" {
+			log.Println("Setting Dial option")
+			log.Println(reqOpts.Proxy)
+			client.Dial = fasthttpproxy.FasthttpHTTPDialer(reqOpts.Proxy)
 		}
 		// Load request URL
 		req.SetRequestURI(reqOpts.URL)
