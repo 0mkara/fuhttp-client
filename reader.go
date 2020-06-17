@@ -40,7 +40,7 @@ var (
 		WriteBufferSize:               4 * 4096, // Same but for your response.
 		ReadTimeout:                   time.Second,
 		WriteTimeout:                  time.Second,
-		MaxIdleConnDuration:           time.Second,
+		MaxIdleConnDuration:           time.Minute,
 		DisableHeaderNamesNormalizing: true, // If you set the case on your headers correctly you can enable this.
 		TLSConfig:                     &tls.Config{InsecureSkipVerify: true},
 	}

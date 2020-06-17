@@ -16,15 +16,15 @@ func fuclient(c net.Conn, req *fasthttp.Request, res *fasthttp.Response, client 
 	startTime := time.Now()
 	timeout := time.Duration(10) * time.Second
 	fucl := &fasthttp.Client{
-		NoDefaultUserAgentHeader:      true,
-		EnableRawHeaders:              true,
-		MaxConnsPerHost:               10000,
-		ReadBufferSize:                4 * 4096, // Make sure to set this big enough that your whole request can be read at once.
-		WriteBufferSize:               4 * 4096, // Same but for your response.
-		ReadTimeout:                   time.Second * 2,
-		WriteTimeout:                  time.Second,
-		MaxIdleConnDuration:           time.Second,
-		DisableHeaderNamesNormalizing: true, // If you set the case on your headers correctly you can enable this.
+		NoDefaultUserAgentHeader:      client.NoDefaultUserAgentHeader,
+		EnableRawHeaders:              client.EnableRawHeaders,
+		MaxConnsPerHost:               client.MaxConnsPerHost,
+		ReadBufferSize:                client.ReadBufferSize,
+		WriteBufferSize:               client.WriteBufferSize,
+		ReadTimeout:                   client.ReadTimeout,
+		WriteTimeout:                  client.WriteTimeout,
+		MaxIdleConnDuration:           client.MaxIdleConnDuration,
+		DisableHeaderNamesNormalizing: client.DisableHeaderNamesNormalizing,
 		TLSConfig:                     client.TLSConfig.Clone(),
 		ClientHelloSpec:               client.ClientHelloSpec,
 		ClientHelloID:                 client.ClientHelloID,
@@ -47,17 +47,20 @@ func fuclient(c net.Conn, req *fasthttp.Request, res *fasthttp.Response, client 
 				bodyBytes, err = res.BodyGunzip()
 				if err != nil {
 					c.Write([]byte(`{"error":"gzip read error"}`))
+					c.Close()
 				}
 			case "br":
 				bodyBytes, err = res.BodyUnbrotli()
 				if err != nil {
 					c.Write([]byte(`{"error":"brotli read error"}`))
+					c.Close()
 				}
 				break
 			case "deflate":
 				bodyBytes, err = res.BodyInflate()
 				if err != nil {
 					c.Write([]byte(`{"error":"brotli read error"}`))
+					c.Close()
 				}
 				break
 			default:
@@ -89,5 +92,4 @@ func fuclient(c net.Conn, req *fasthttp.Request, res *fasthttp.Response, client 
 	log.Println(string(fb))
 	c.Write(fb)
 	c.Close()
-	return
 }
