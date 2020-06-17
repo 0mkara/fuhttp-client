@@ -40,7 +40,7 @@ var (
 		WriteBufferSize:               4 * 4096, // Same but for your response.
 		ReadTimeout:                   time.Second,
 		WriteTimeout:                  time.Second,
-		MaxIdleConnDuration:           time.Minute,
+		MaxIdleConnDuration:           time.Second,
 		DisableHeaderNamesNormalizing: true, // If you set the case on your headers correctly you can enable this.
 		TLSConfig:                     &tls.Config{InsecureSkipVerify: true},
 	}
@@ -71,7 +71,9 @@ func reader(c net.Conn) {
 			fasthttp.ReleaseResponse(res)
 		}()
 		// Load parrot
-		if reqOpts.ParrotID > -1 {
+		if reqOpts.ParrotID > 13 {
+			client.ClientHelloSpec = GetHelloCustom()
+		} else if reqOpts.ParrotID > -1 {
 			client.ClientHelloID = &pm[reqOpts.ParrotID]
 		} else {
 			client.ClientHelloID = &pm[5]
@@ -94,8 +96,6 @@ func reader(c net.Conn) {
 		}
 		// Load proxy
 		if reqOpts.Proxy != "" {
-			log.Println("Setting Dial option")
-			log.Println(reqOpts.Proxy)
 			client.Dial = fasthttpproxy.FasthttpHTTPDialer(reqOpts.Proxy)
 		}
 		// Load request URL

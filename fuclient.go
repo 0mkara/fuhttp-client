@@ -14,10 +14,23 @@ import (
 func fuclient(c net.Conn, req *fasthttp.Request, res *fasthttp.Response, client *fasthttp.Client) {
 	// Finally do client request
 	startTime := time.Now()
-	timeout := time.Duration(60) * time.Second
-	fmt.Println(req)
-	fmt.Println(timeout)
-	if err := client.DoTimeout(req, res, timeout); err != nil {
+	timeout := time.Duration(10) * time.Second
+	fucl := &fasthttp.Client{
+		NoDefaultUserAgentHeader:      true,
+		EnableRawHeaders:              true,
+		MaxConnsPerHost:               10000,
+		ReadBufferSize:                4 * 4096, // Make sure to set this big enough that your whole request can be read at once.
+		WriteBufferSize:               4 * 4096, // Same but for your response.
+		ReadTimeout:                   time.Second * 2,
+		WriteTimeout:                  time.Second,
+		MaxIdleConnDuration:           time.Second,
+		DisableHeaderNamesNormalizing: true, // If you set the case on your headers correctly you can enable this.
+		TLSConfig:                     client.TLSConfig.Clone(),
+		ClientHelloSpec:               client.ClientHelloSpec,
+		ClientHelloID:                 client.ClientHelloID,
+		Dial:                          client.Dial,
+	}
+	if err := fucl.DoTimeout(req, res, timeout); err != nil {
 		log.Println("Error in DoTimeout")
 		fmt.Println(err)
 		c.Write([]byte(`{"error":"` + err.Error() + `"}`))
@@ -29,8 +42,6 @@ func fuclient(c net.Conn, req *fasthttp.Request, res *fasthttp.Response, client 
 	var err error
 	res.Header.VisitAll(func(key, value []byte) {
 		if string(key) == "Content-Encoding" {
-			log.Println("detecting encoding.......")
-			log.Println(string(value))
 			switch string(value) {
 			case "gzip":
 				bodyBytes, err = res.BodyGunzip()
@@ -78,4 +89,5 @@ func fuclient(c net.Conn, req *fasthttp.Request, res *fasthttp.Response, client 
 	log.Println(string(fb))
 	c.Write(fb)
 	c.Close()
+	return
 }
