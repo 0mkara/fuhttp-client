@@ -14,7 +14,7 @@ import (
 func fuclient(c net.Conn, req *fasthttp.Request, res *fasthttp.Response, client *fasthttp.Client) {
 	// Finally do client request
 	startTime := time.Now()
-	timeout := time.Duration(10) * time.Second
+	timeout := time.Duration(20) * time.Second
 	fucl := &fasthttp.Client{
 		NoDefaultUserAgentHeader:      client.NoDefaultUserAgentHeader,
 		EnableRawHeaders:              client.EnableRawHeaders,

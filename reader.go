@@ -38,8 +38,8 @@ var (
 		MaxConnsPerHost:               10000,
 		ReadBufferSize:                4 * 4096, // Make sure to set this big enough that your whole request can be read at once.
 		WriteBufferSize:               4 * 4096, // Same but for your response.
-		ReadTimeout:                   time.Second,
-		WriteTimeout:                  time.Second,
+		ReadTimeout:                   time.Second * 10,
+		WriteTimeout:                  time.Second * 10,
 		MaxIdleConnDuration:           time.Minute,
 		DisableHeaderNamesNormalizing: true, // If you set the case on your headers correctly you can enable this.
 		TLSConfig:                     &tls.Config{InsecureSkipVerify: true},
