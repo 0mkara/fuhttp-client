@@ -10,6 +10,7 @@ type RequestOpts struct {
 	Body        string            `json:"body,omitempty"`
 	Timeout     int               `json:"timeout,omitempty"`
 	ParrotID    int               `json:"parrotId,omitempty"`
+	SessionID   string            `json:"session_id"`
 }
 
 // RequestResp response to return
@@ -21,7 +22,8 @@ type RequestResp struct {
 
 // RequestResult result to return
 type RequestResult struct {
-	Error    string       `json:"error"`
-	Response *RequestResp `json:"response,omitempty"`
-	Body     string       `json:"body"`
+	Error     string       `json:"error"`
+	Response  *RequestResp `json:"response,omitempty"`
+	Body      string       `json:"body"`
+	SessionID string       `json:"session_id"`
 }

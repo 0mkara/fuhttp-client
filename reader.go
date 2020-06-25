@@ -15,6 +15,7 @@ import (
 )
 
 var (
+	sessions  = make(map[string]*fasthttp.Client)
 	parrotmap = make(map[int]interface{})
 	parrots   = []tls.ClientHelloID{
 		tls.HelloFirefox_Auto,
@@ -70,13 +71,54 @@ func reader(c net.Conn) {
 			fasthttp.ReleaseRequest(req)
 			fasthttp.ReleaseResponse(res)
 		}()
-		// Load parrot
-		if reqOpts.ParrotID > 13 {
-			client.ClientHelloSpec = GetHelloCustom()
-		} else if reqOpts.ParrotID > -1 {
-			client.ClientHelloID = &pm[reqOpts.ParrotID]
-		} else {
-			client.ClientHelloID = &pm[5]
+		// TODO: session implementation
+		// 1. check if have sessionid
+		if reqOpts.SessionID != "" && sessions[reqOpts.SessionID] != nil {
+			client = &fasthttp.Client{
+				NoDefaultUserAgentHeader:      sessions[reqOpts.SessionID].NoDefaultUserAgentHeader,
+				EnableRawHeaders:              sessions[reqOpts.SessionID].EnableRawHeaders,
+				MaxConnsPerHost:               sessions[reqOpts.SessionID].MaxConnsPerHost,
+				ReadBufferSize:                sessions[reqOpts.SessionID].ReadBufferSize,
+				WriteBufferSize:               sessions[reqOpts.SessionID].WriteBufferSize,
+				ReadTimeout:                   sessions[reqOpts.SessionID].ReadTimeout,
+				WriteTimeout:                  sessions[reqOpts.SessionID].WriteTimeout,
+				MaxIdleConnDuration:           sessions[reqOpts.SessionID].MaxIdleConnDuration,
+				DisableHeaderNamesNormalizing: sessions[reqOpts.SessionID].DisableHeaderNamesNormalizing,
+				TLSConfig:                     sessions[reqOpts.SessionID].TLSConfig.Clone(),
+				ClientHelloSpec:               sessions[reqOpts.SessionID].ClientHelloSpec,
+				ClientHelloID:                 sessions[reqOpts.SessionID].ClientHelloID,
+				Dial:                          fasthttpproxy.FasthttpHTTPDialer(reqOpts.Proxy),
+			}
+		}
+		// 2. create new session variables or load from existing session
+		if reqOpts.SessionID != "" && sessions[reqOpts.SessionID] == nil {
+			// Load parrot
+			if reqOpts.ParrotID > 13 {
+				client.ClientHelloSpec = GetHelloCustom()
+			} else if reqOpts.ParrotID > -1 {
+				client.ClientHelloID = &pm[reqOpts.ParrotID]
+			} else {
+				client.ClientHelloID = &pm[5]
+			}
+			// Load proxy
+			if reqOpts.Proxy != "" {
+				client.Dial = fasthttpproxy.FasthttpHTTPDialer(reqOpts.Proxy)
+			}
+			sessions[reqOpts.SessionID] = &fasthttp.Client{
+				NoDefaultUserAgentHeader:      client.NoDefaultUserAgentHeader,
+				EnableRawHeaders:              client.EnableRawHeaders,
+				MaxConnsPerHost:               client.MaxConnsPerHost,
+				ReadBufferSize:                client.ReadBufferSize,
+				WriteBufferSize:               client.WriteBufferSize,
+				ReadTimeout:                   client.ReadTimeout,
+				WriteTimeout:                  client.WriteTimeout,
+				MaxIdleConnDuration:           client.MaxIdleConnDuration,
+				DisableHeaderNamesNormalizing: client.DisableHeaderNamesNormalizing,
+				TLSConfig:                     client.TLSConfig.Clone(),
+				ClientHelloSpec:               client.ClientHelloSpec,
+				ClientHelloID:                 client.ClientHelloID,
+				Dial:                          client.Dial,
+			}
 		}
 		// Load headers in order if present
 		if reqOpts.HeaderOrder != "" {
@@ -94,10 +136,6 @@ func reader(c net.Conn) {
 				}
 			}
 		}
-		// Load proxy
-		if reqOpts.Proxy != "" {
-			client.Dial = fasthttpproxy.FasthttpHTTPDialer(reqOpts.Proxy)
-		}
 		// Load request URL
 		req.SetRequestURI(reqOpts.URL)
 		// Load request method
@@ -110,6 +148,6 @@ func reader(c net.Conn) {
 		}
 		// Request parsing ends above
 		// -------------------------------------------------------------------------------------------------------------------------------------
-		go fuclient(c, req, res, client)
+		go fuclient(c, req, res, client, reqOpts.SessionID)
 	}
 }

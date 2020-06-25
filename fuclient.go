@@ -11,7 +11,7 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-func fuclient(c net.Conn, req *fasthttp.Request, res *fasthttp.Response, client *fasthttp.Client) {
+func fuclient(c net.Conn, req *fasthttp.Request, res *fasthttp.Response, client *fasthttp.Client, SessionID string) {
 	// Finally do client request
 	startTime := time.Now()
 	timeout := time.Duration(20) * time.Second
@@ -31,7 +31,7 @@ func fuclient(c net.Conn, req *fasthttp.Request, res *fasthttp.Response, client 
 		Dial:                          client.Dial,
 	}
 	if err := fucl.DoTimeout(req, res, timeout); err != nil {
-		log.Println("Error in DoTimeout")
+		log.Println("************************* Error in DoTimeout ***************************")
 		fmt.Println(err)
 		c.Write([]byte(`{"error":"` + err.Error() + `"}`))
 		c.Close()
@@ -82,6 +82,7 @@ func fuclient(c net.Conn, req *fasthttp.Request, res *fasthttp.Response, client 
 	})
 
 	result := &RequestResult{}
+	result.SessionID = SessionID
 	result.Response = response
 	result.Body = base64.StdEncoding.EncodeToString(bodyBytes)
 	fb, err := json.Marshal(result)
