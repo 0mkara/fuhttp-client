@@ -2,6 +2,7 @@ package main
 
 // RequestOpts : Request options received from node client
 type RequestOpts struct {
+	Name        string            `json:"name"`
 	Method      string            `json:"method,omitempty"`
 	URL         string            `json:"url,omitempty"`
 	Proxy       string            `json:"proxy,omitempty"`

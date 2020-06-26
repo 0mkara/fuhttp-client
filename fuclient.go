@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net"
 	"time"
 
@@ -16,6 +15,7 @@ func fuclient(c net.Conn, req *fasthttp.Request, res *fasthttp.Response, client 
 	startTime := time.Now()
 	timeout := time.Duration(20) * time.Second
 	fucl := &fasthttp.Client{
+		Name:                          client.Name,
 		NoDefaultUserAgentHeader:      client.NoDefaultUserAgentHeader,
 		EnableRawHeaders:              client.EnableRawHeaders,
 		MaxConnsPerHost:               client.MaxConnsPerHost,
@@ -26,12 +26,11 @@ func fuclient(c net.Conn, req *fasthttp.Request, res *fasthttp.Response, client 
 		MaxIdleConnDuration:           client.MaxIdleConnDuration,
 		DisableHeaderNamesNormalizing: client.DisableHeaderNamesNormalizing,
 		TLSConfig:                     client.TLSConfig.Clone(),
-		ClientHelloSpec:               client.ClientHelloSpec,
+		ClientHelloSpec:               GetHelloCustom(),
 		ClientHelloID:                 client.ClientHelloID,
 		Dial:                          client.Dial,
 	}
 	if err := fucl.DoTimeout(req, res, timeout); err != nil {
-		log.Println("************************* Error in DoTimeout ***************************")
 		fmt.Println(err)
 		c.Write([]byte(`{"error":"` + err.Error() + `"}`))
 		c.Close()
@@ -89,8 +88,8 @@ func fuclient(c net.Conn, req *fasthttp.Request, res *fasthttp.Response, client 
 	if err != nil {
 		c.Write([]byte(`{"error":"couldnt marshal json"}`))
 	}
-	log.Println(".............Final response.............")
-	log.Println(string(fb))
+	// log.Println(".............Final response.............")
+	// log.Println(string(fb))
 	c.Write(fb)
 	c.Close()
 }

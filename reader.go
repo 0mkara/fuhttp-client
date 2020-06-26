@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net"
 	"time"
@@ -57,8 +56,8 @@ func reader(c net.Conn) {
 			c.Write([]byte(err.Error()))
 			return
 		}
-		log.Println(".............Received request.............")
-		fmt.Println(string(buf[0:n]))
+		// log.Println(".............Received request.............")
+		// fmt.Println(string(buf[0:n]))
 		reqOpts := RequestOpts{}
 		err = json.Unmarshal(buf[0:n], &reqOpts)
 		if err != nil {
@@ -75,6 +74,7 @@ func reader(c net.Conn) {
 		// 1. check if have sessionid
 		if reqOpts.SessionID != "" && sessions[reqOpts.SessionID] != nil {
 			client = &fasthttp.Client{
+				Name:                          sessions[reqOpts.SessionID].Name,
 				NoDefaultUserAgentHeader:      sessions[reqOpts.SessionID].NoDefaultUserAgentHeader,
 				EnableRawHeaders:              sessions[reqOpts.SessionID].EnableRawHeaders,
 				MaxConnsPerHost:               sessions[reqOpts.SessionID].MaxConnsPerHost,
@@ -92,8 +92,10 @@ func reader(c net.Conn) {
 		}
 		// 2. create new session variables or load from existing session
 		if reqOpts.SessionID != "" && sessions[reqOpts.SessionID] == nil {
+			client.Name = reqOpts.Name
 			// Load parrot
 			if reqOpts.ParrotID > 13 {
+				client.ClientHelloID = &tls.HelloCustom
 				client.ClientHelloSpec = GetHelloCustom()
 			} else if reqOpts.ParrotID > -1 {
 				client.ClientHelloID = &pm[reqOpts.ParrotID]
@@ -105,6 +107,7 @@ func reader(c net.Conn) {
 				client.Dial = fasthttpproxy.FasthttpHTTPDialer(reqOpts.Proxy)
 			}
 			sessions[reqOpts.SessionID] = &fasthttp.Client{
+				Name:                          client.Name,
 				NoDefaultUserAgentHeader:      client.NoDefaultUserAgentHeader,
 				EnableRawHeaders:              client.EnableRawHeaders,
 				MaxConnsPerHost:               client.MaxConnsPerHost,
