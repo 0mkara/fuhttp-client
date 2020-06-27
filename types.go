@@ -1,5 +1,7 @@
 package main
 
+import "github.com/valyala/fasthttp"
+
 // RequestOpts : Request options received from node client
 type RequestOpts struct {
 	Name        string            `json:"name"`
@@ -27,4 +29,9 @@ type RequestResult struct {
 	Response  *RequestResp `json:"response,omitempty"`
 	Body      string       `json:"body"`
 	SessionID string       `json:"session_id"`
+}
+
+type Session struct {
+	Client      *fasthttp.Client
+	HelloCustom string
 }

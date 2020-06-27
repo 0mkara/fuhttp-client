@@ -3,8 +3,8 @@ package main
 import tls "github.com/refraction-networking/utls"
 
 // GetHelloCustom creates a new ClientHelloSpec
-func GetHelloCustom() tls.ClientHelloSpec {
-	hellocustom := tls.ClientHelloSpec{
+func GetHelloCustom() (tls.ClientHelloSpec, error) {
+	return tls.ClientHelloSpec{
 		CipherSuites: []uint16{
 			tls.GREASE_PLACEHOLDER,
 			tls.TLS_AES_128_GCM_SHA256,
@@ -74,6 +74,5 @@ func GetHelloCustom() tls.ClientHelloSpec {
 			&tls.UtlsGREASEExtension{},
 			&tls.UtlsPaddingExtension{GetPaddingLen: tls.BoringPaddingStyle},
 		},
-	}
-	return hellocustom
+	}, nil
 }

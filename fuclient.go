@@ -5,16 +5,39 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net"
 	"time"
 
+	tls "github.com/refraction-networking/utls"
 	"github.com/valyala/fasthttp"
 )
 
-func fuclient(c net.Conn, req *fasthttp.Request, res *fasthttp.Response, client *fasthttp.Client, SessionID string) {
+var (
+	parrotmap = make(map[int]interface{})
+	parrots   = []tls.ClientHelloID{
+		tls.HelloFirefox_Auto,
+		tls.HelloFirefox_55,
+		tls.HelloFirefox_56,
+		tls.HelloFirefox_63,
+		tls.HelloFirefox_65,
+		tls.HelloChrome_Auto,
+		tls.HelloChrome_58,
+		tls.HelloChrome_62,
+		tls.HelloChrome_70,
+		tls.HelloChrome_72,
+		tls.HelloChrome_83,
+		tls.HelloIOS_Auto,
+		tls.HelloIOS_11_1,
+		tls.HelloIOS_12_1,
+	}
+)
+
+func fuclient(req *fasthttp.Request, res *fasthttp.Response, client *fasthttp.Client, SessionID string, ParrotID int, ch chan []byte) {
 	// Finally do client request
 	startTime := time.Now()
 	timeout := time.Duration(20) * time.Second
+	// Create Parrot map
+	parrotmap[0] = parrots
+	pm := parrotmap[0].([]tls.ClientHelloID)
 	fucl := &fasthttp.Client{
 		Name:                          client.Name,
 		NoDefaultUserAgentHeader:      client.NoDefaultUserAgentHeader,
@@ -27,14 +50,31 @@ func fuclient(c net.Conn, req *fasthttp.Request, res *fasthttp.Response, client 
 		MaxIdleConnDuration:           client.MaxIdleConnDuration,
 		DisableHeaderNamesNormalizing: client.DisableHeaderNamesNormalizing,
 		TLSConfig:                     client.TLSConfig.Clone(),
-		ClientHelloSpec:               GetHelloCustom(),
-		ClientHelloID:                 client.ClientHelloID,
 		Dial:                          client.Dial,
 	}
+	// Load parrot
+	// If ParrotID > 13 use custom parrots
+	if ParrotID > 13 {
+		hello, err := GetHelloCustom()
+		if err != nil {
+			// c.Write([]byte(`{"error":"Could not create custom hello spec."}`))
+			ch <- []byte(`{"error":"Could not create custom hello spec."}`)
+		}
+		fucl.ClientHelloID = &tls.HelloCustom
+		fucl.ClientHelloSpec = hello
+	} else if ParrotID > -1 && ParrotID < 14 {
+		client.ClientHelloID = &pm[ParrotID]
+	} else {
+		client.ClientHelloID = &pm[5]
+	}
+	// Else use predefined parrots
+	log.Println("fuclient: session id - ", SessionID)
+	fmt.Println(fucl.ClientHelloSpec.Extensions)
 	if err := fucl.DoTimeout(req, res, timeout); err != nil {
 		fmt.Println(err)
-		c.Write([]byte(`{"error":"` + err.Error() + `"}`))
-		c.Close()
+		// c.Write([]byte(`{"error":"` + err.Error() + `"}`))
+		// c.Close()
+		ch <- []byte(`{"error":"` + err.Error() + `"}`)
 		return
 	}
 
@@ -46,21 +86,25 @@ func fuclient(c net.Conn, req *fasthttp.Request, res *fasthttp.Response, client 
 			case "gzip":
 				bodyBytes, err = res.BodyGunzip()
 				if err != nil {
-					c.Write([]byte(`{"error":"gzip read error"}`))
+					// c.Write([]byte(`{"error":"gzip read error"}`))
 					// c.Close()
+					ch <- []byte(`{"error":"gzip read error"}`)
 				}
+				break
 			case "br":
 				bodyBytes, err = res.BodyUnbrotli()
 				if err != nil {
-					c.Write([]byte(`{"error":"brotli read error"}`))
+					// c.Write([]byte(`{"error":"brotli read error"}`))
 					// c.Close()
+					ch <- []byte(`{"error":"brotli read error"}`)
 				}
 				break
 			case "deflate":
 				bodyBytes, err = res.BodyInflate()
 				if err != nil {
-					c.Write([]byte(`{"error":"brotli read error"}`))
+					// c.Write([]byte(`{"error":"brotli read error"}`))
 					// c.Close()
+					ch <- []byte(`{"error":"deflate read error"}`)
 				}
 				break
 			default:
@@ -87,9 +131,12 @@ func fuclient(c net.Conn, req *fasthttp.Request, res *fasthttp.Response, client 
 	result.Body = base64.StdEncoding.EncodeToString(bodyBytes)
 	fb, err := json.Marshal(result)
 	if err != nil {
-		c.Write([]byte(`{"error":"couldnt marshal json"}`))
+		// c.Write([]byte(`{"error":"couldnt marshal json"}`))
+		ch <- []byte(`{"error":"couldnt marshal json"}`)
 	}
 	log.Println(".............Final response.............")
 	log.Println(string(fb))
-	c.Write(fb)
+	// c.Write(fb)
+	// c.Close()
+	ch <- fb
 }
