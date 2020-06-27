@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net"
 	"time"
@@ -56,8 +57,8 @@ func reader(c net.Conn) {
 			c.Write([]byte(err.Error()))
 			return
 		}
-		// log.Println(".............Received request.............")
-		// fmt.Println(string(buf[0:n]))
+		log.Println(".............Received request.............")
+		fmt.Println(string(buf[0:n]))
 		reqOpts := RequestOpts{}
 		err = json.Unmarshal(buf[0:n], &reqOpts)
 		if err != nil {

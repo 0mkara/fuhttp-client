@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net"
 	"time"
 
@@ -46,20 +47,20 @@ func fuclient(c net.Conn, req *fasthttp.Request, res *fasthttp.Response, client 
 				bodyBytes, err = res.BodyGunzip()
 				if err != nil {
 					c.Write([]byte(`{"error":"gzip read error"}`))
-					c.Close()
+					// c.Close()
 				}
 			case "br":
 				bodyBytes, err = res.BodyUnbrotli()
 				if err != nil {
 					c.Write([]byte(`{"error":"brotli read error"}`))
-					c.Close()
+					// c.Close()
 				}
 				break
 			case "deflate":
 				bodyBytes, err = res.BodyInflate()
 				if err != nil {
 					c.Write([]byte(`{"error":"brotli read error"}`))
-					c.Close()
+					// c.Close()
 				}
 				break
 			default:
@@ -88,8 +89,7 @@ func fuclient(c net.Conn, req *fasthttp.Request, res *fasthttp.Response, client 
 	if err != nil {
 		c.Write([]byte(`{"error":"couldnt marshal json"}`))
 	}
-	// log.Println(".............Final response.............")
-	// log.Println(string(fb))
+	log.Println(".............Final response.............")
+	log.Println(string(fb))
 	c.Write(fb)
-	c.Close()
 }
