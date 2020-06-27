@@ -57,23 +57,20 @@ func fuclient(req *fasthttp.Request, res *fasthttp.Response, client *fasthttp.Cl
 	if ParrotID > 13 {
 		hello, err := GetHelloCustom()
 		if err != nil {
-			// c.Write([]byte(`{"error":"Could not create custom hello spec."}`))
 			ch <- []byte(`{"error":"Could not create custom hello spec."}`)
 		}
 		fucl.ClientHelloID = &tls.HelloCustom
 		fucl.ClientHelloSpec = hello
 	} else if ParrotID > -1 && ParrotID < 14 {
-		client.ClientHelloID = &pm[ParrotID]
+		fucl.ClientHelloID = &pm[ParrotID]
 	} else {
-		client.ClientHelloID = &pm[5]
+		fucl.ClientHelloID = &pm[5]
 	}
 	// Else use predefined parrots
-	log.Println("fuclient: session id - ", SessionID)
-	fmt.Println(fucl.ClientHelloSpec.Extensions)
+	// log.Println("fuclient: session id - ", SessionID)
+	// fmt.Println(fucl.TLSConfig)
 	if err := fucl.DoTimeout(req, res, timeout); err != nil {
 		fmt.Println(err)
-		// c.Write([]byte(`{"error":"` + err.Error() + `"}`))
-		// c.Close()
 		ch <- []byte(`{"error":"` + err.Error() + `"}`)
 		return
 	}
@@ -86,24 +83,18 @@ func fuclient(req *fasthttp.Request, res *fasthttp.Response, client *fasthttp.Cl
 			case "gzip":
 				bodyBytes, err = res.BodyGunzip()
 				if err != nil {
-					// c.Write([]byte(`{"error":"gzip read error"}`))
-					// c.Close()
 					ch <- []byte(`{"error":"gzip read error"}`)
 				}
 				break
 			case "br":
 				bodyBytes, err = res.BodyUnbrotli()
 				if err != nil {
-					// c.Write([]byte(`{"error":"brotli read error"}`))
-					// c.Close()
 					ch <- []byte(`{"error":"brotli read error"}`)
 				}
 				break
 			case "deflate":
 				bodyBytes, err = res.BodyInflate()
 				if err != nil {
-					// c.Write([]byte(`{"error":"brotli read error"}`))
-					// c.Close()
 					ch <- []byte(`{"error":"deflate read error"}`)
 				}
 				break
@@ -131,12 +122,9 @@ func fuclient(req *fasthttp.Request, res *fasthttp.Response, client *fasthttp.Cl
 	result.Body = base64.StdEncoding.EncodeToString(bodyBytes)
 	fb, err := json.Marshal(result)
 	if err != nil {
-		// c.Write([]byte(`{"error":"couldnt marshal json"}`))
 		ch <- []byte(`{"error":"couldnt marshal json"}`)
 	}
 	log.Println(".............Final response.............")
 	log.Println(string(fb))
-	// c.Write(fb)
-	// c.Close()
 	ch <- fb
 }

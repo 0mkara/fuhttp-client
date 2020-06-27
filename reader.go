@@ -26,7 +26,7 @@ var (
 		WriteTimeout:                  time.Second * 10,
 		MaxIdleConnDuration:           time.Minute,
 		DisableHeaderNamesNormalizing: true, // If you set the case on your headers correctly you can enable this.
-		TLSConfig:                     &tls.Config{InsecureSkipVerify: true},
+		TLSConfig:                     &tls.Config{InsecureSkipVerify: true, MaxVersion: 0},
 	}
 )
 
@@ -120,9 +120,10 @@ func reader(c net.Conn) {
 		}
 		// Request parsing ends above
 		// -------------------------------------------------------------------------------------------------------------------------------------
-		ch := make(chan []byte, 10)
+		ch := make(chan []byte, 4)
 		go fuclient(req, res, client, reqOpts.SessionID, reqOpts.ParrotID, ch)
 		c.Write([]byte(<-ch))
+		close(ch)
 		c.Close()
 	}
 }
