@@ -55,6 +55,7 @@ func reader(c net.Conn) {
 		// TODO: session implementation
 		// 1. check if have sessionid load client parameters
 		if reqOpts.SessionID != "" && sessions[reqOpts.SessionID] != nil {
+			fmt.Println("Loading session: ", reqOpts.SessionID)
 			client = &fasthttp.Client{
 				Name:                          sessions[reqOpts.SessionID].Name,
 				NoDefaultUserAgentHeader:      sessions[reqOpts.SessionID].NoDefaultUserAgentHeader,
@@ -67,15 +68,17 @@ func reader(c net.Conn) {
 				MaxIdleConnDuration:           sessions[reqOpts.SessionID].MaxIdleConnDuration,
 				DisableHeaderNamesNormalizing: sessions[reqOpts.SessionID].DisableHeaderNamesNormalizing,
 				TLSConfig:                     sessions[reqOpts.SessionID].TLSConfig.Clone(),
-				Dial:                          fasthttpproxy.FasthttpHTTPDialer(reqOpts.Proxy),
+				Dial:                          sessions[reqOpts.SessionID].Dial,
 			}
 		}
 		// 2. create new session variables or load from existing session
-		if reqOpts.SessionID != "" && sessions[reqOpts.SessionID] == nil {
+		if reqOpts.SessionID != "" || sessions[reqOpts.SessionID] == nil {
+			fmt.Println("Creating session: ", reqOpts.SessionID)
 			client.Name = reqOpts.Name
 			// Load proxy
 			if reqOpts.Proxy != "" {
 				client.Dial = fasthttpproxy.FasthttpHTTPDialer(reqOpts.Proxy)
+				// client.Dial = FasthttpHTTPProxyRollerDialer(reqOpts.Proxy, reqOpts.URL)
 			}
 			sessions[reqOpts.SessionID] = &fasthttp.Client{
 				Name:                          client.Name,

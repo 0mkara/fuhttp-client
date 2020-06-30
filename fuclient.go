@@ -49,7 +49,6 @@ func fuclient(req *fasthttp.Request, res *fasthttp.Response, client *fasthttp.Cl
 		WriteTimeout:                  client.WriteTimeout,
 		MaxIdleConnDuration:           client.MaxIdleConnDuration,
 		DisableHeaderNamesNormalizing: client.DisableHeaderNamesNormalizing,
-		TLSConfig:                     client.TLSConfig.Clone(),
 		Dial:                          client.Dial,
 	}
 	// Load parrot
