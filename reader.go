@@ -78,7 +78,6 @@ func reader(c net.Conn) {
 			// Load proxy
 			if reqOpts.Proxy != "" {
 				client.Dial = fasthttpproxy.FasthttpHTTPDialer(reqOpts.Proxy)
-				// client.Dial = FasthttpHTTPProxyRollerDialer(reqOpts.Proxy, reqOpts.URL)
 			}
 			sessions[reqOpts.SessionID] = &fasthttp.Client{
 				Name:                          client.Name,

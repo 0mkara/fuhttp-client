@@ -66,8 +66,8 @@ func fuclient(req *fasthttp.Request, res *fasthttp.Response, client *fasthttp.Cl
 		fucl.ClientHelloID = &pm[5]
 	}
 	// Else use predefined parrots
-	// log.Println("fuclient: session id - ", SessionID)
-	// fmt.Println(fucl.TLSConfig)
+	log.Println("fuclient: session id - ", SessionID)
+	fmt.Println(fucl.TLSConfig)
 	if err := fucl.DoTimeout(req, res, timeout); err != nil {
 		fmt.Println(err)
 		ch <- []byte(`{"error":"` + err.Error() + `"}`)
