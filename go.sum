@@ -1,3 +1,5 @@
+github.com/0mkara/fuhttp v0.0.0-20200626211120-33e193348970 h1:0nXDFB8q6fKMCf4OuiyUaju8QmF0ckoNZhWaIiip/4Y=
+github.com/0mkara/fuhttp v0.0.0-20200626211120-33e193348970/go.mod h1:2hvFUQ/syGasM31LR1UJgPNAZLS2wJ8YDULrRqQTyiI=
 github.com/andybalholm/brotli v1.0.0 h1:7UCwP93aiSfvWpapti8g88vVVGp2qqtGyePsSuDafo4=
 github.com/andybalholm/brotli v1.0.0/go.mod h1:loMXtMfwqflxFJPmdbJO0a3KNoPuLBgiu3qAvBg8x/Y=
 github.com/klauspost/compress v1.10.4 h1:jFzIFaf586tquEB5EhzQG0HwGNSlgAJpG53G6Ss11wc=
