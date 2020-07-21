@@ -55,7 +55,7 @@ class Dsg():
     def run(self):
         try:
             fp = getTLSFingerprint(None, self.agent, self.parrotId)
-            print("Fingerprint: ")
+            print("Fingerprint result: ")
             print(fp)
         except Exception as e:
             print(e)

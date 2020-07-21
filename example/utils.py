@@ -52,21 +52,3 @@ def aquireSocket():
     except socket.error as msg:
         print(msg)
         sys.exit(1)
-
-
-def createAuthtoken():
-    try:
-        date = datetime.now() + timedelta(days=30)
-        c = 'authTokens=' + quote('{"type":"guest","visits":1,"expires":"' +
-                                  date.isoformat() + '"}') + '; path=/; domain=dickssportinggoods.com'
-        return c
-    except Exception as e:
-        raise e
-
-
-def createMbox():
-    uid = uuid.uuid4()
-    time = datetime.now()
-    c = 'mbox=' + str(uid) + "#" + time.isoformat() + \
-        '; path=/; domain=dickssportinggoods.com'
-    return c
