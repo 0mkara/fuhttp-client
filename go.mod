@@ -7,5 +7,5 @@ replace github.com/valyala/fasthttp => github.com/0mkara/fuhttp v0.0.0-202006262
 require (
 	github.com/refraction-networking/utls v0.0.0-20200601200209-ada0bb9b38a0
 	github.com/valyala/fasthttp v0.0.0-00010101000000-000000000000
-	golang.org/x/crypto v0.0.0-20200602180216-279210d13fed // indirect
+	golang.org/x/crypto v0.1.0 // indirect
 )
